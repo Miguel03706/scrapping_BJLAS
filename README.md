@@ -48,7 +48,7 @@ cd scrapping_BJLAS
 pip install -r requirements.txt
 
 # Execute o script principal
-python interfaces/cli/main.py
+python -m core.interfaces.cli.main
 ```
 
 ## ⚙️ Configurações
@@ -66,6 +66,7 @@ URLS = [
 ```
 
 ## 🧠 Arquitetura Hexagonal
+
 ![Diagrama mostrando a CLI conectada ao ScrapingService, que usa repositórios e logger](docs/images/arquitetura_hexagonal.png)
 
 ## 🧠 Princípios de Design
@@ -86,6 +87,7 @@ URLS = [
   - Tudo que depende de IO está adaptado e pode ser mockado facilmente
 
 ## 🚀 Fluxo de Execução
+
 ![Fluxograma do processo de scraping desde a CLI até o relatório final](docs/images/fluxo_execucao.png)
 
 ## 📄 Exemplo de Saída
@@ -136,4 +138,3 @@ pytest
 - Banco de dados para metadados
 - Monitoramento com Prometheus
 - Upload automatizado para S3 ou GDrive
-
