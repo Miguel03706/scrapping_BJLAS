@@ -55,7 +55,7 @@ class HTTPEdicaoRepository(EdicaoRepository):
                 id_artigo = id_match.group(1) if id_match else "ID_DESCONHECIDO"
                 
                 # Constrói o DOI com o padrão fixo da revista PROLAM
-                doi_montado = f"10.11606/issn.1676-6288.prolam.{ano}.{id_artigo}"
+                doi_montado = f"https://doi.org/10.11606/issn.1676-6288.prolam.{ano}.{id_artigo}"
                 # ---------------------------------------
 
                 artigos.append(Artigo(
