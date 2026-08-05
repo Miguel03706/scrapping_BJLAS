@@ -1,10 +1,32 @@
 import requests
-import re  # <--- Adicione este import
+import re
+import unicodedata  # <--- Adicionado para remover acentos
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 from core.domain.entities import Edicao, Artigo
 from core.domain.repositories import EdicaoRepository
 from infrastructure.config import URLS, CSS_SELECTORS, TIMEOUT
+
+def formatar_nome_arquivo(texto: str, limite: int = 50) -> str:
+    """
+    Padroniza o nome: tudo minúsculo, sem acentos, sem caracteres especiais, 
+    espaços substituídos por '_' e tamanho limitado.
+    """
+    # 1. Tudo minúsculo
+    texto = texto.lower()
+    
+    # 2. Remove acentos (ex: á -> a, ç -> c)
+    texto = unicodedata.normalize('NFKD', texto).encode('ASCII', 'ignore').decode('utf-8')
+    
+    # 3. Substitui um ou mais espaços e hífens por underscore (_)
+    texto = re.sub(r'[\s\-]+', '_', texto)
+    
+    # 4. Remove qualquer caractere que não seja letra, número ou underscore
+    texto = re.sub(r'[^a-z0-9_]', '', texto)
+    
+    # 5. Limita aos primeiros X caracteres e remove underscore extra no final, se houver
+    return texto[:limite].rstrip('_')
+
 
 class HTTPEdicaoRepository(EdicaoRepository):
     def __init__(self, session: requests.Session):
@@ -37,7 +59,7 @@ class HTTPEdicaoRepository(EdicaoRepository):
             else:
                 data_publicacao = published_div.get_text(strip=True)
 
-        # Extrair o ANO usando Regex (Procura os 4 primeiros dígitos seguidos na string de data)
+        # Extrair o ANO usando Regex
         ano_match = re.search(r'\d{4}', data_publicacao)
         ano = ano_match.group(0) if ano_match else "ANO_DESCONHECIDO"
 
@@ -49,18 +71,18 @@ class HTTPEdicaoRepository(EdicaoRepository):
             if titulo_tag and pdf_tag:
                 url_view_bruta = pdf_tag['href']
                 
-                # --- NOVA LÓGICA INTELIGENTE DO DOI ---
-                # Extrai o ID numérico que vem logo após "/view/" na URL
+                # --- LÓGICA INTELIGENTE DO DOI ---
                 id_match = re.search(r'/view/(\d+)', url_view_bruta)
                 id_artigo = id_match.group(1) if id_match else "ID_DESCONHECIDO"
-                
-                # Constrói o DOI com o padrão fixo da revista PROLAM
                 doi_montado = f"https://doi.org/10.11606/issn.1676-6288.prolam.{ano}.{id_artigo}"
-                # ---------------------------------------
+                
+                # --- APLICA A FORMATAÇÃO DO TÍTULO ---
+                titulo_original = titulo_tag.get_text(strip=True)
+                titulo_formatado = formatar_nome_arquivo(titulo_original)
 
                 artigos.append(Artigo(
                     url_view=urljoin(edicao.url, url_view_bruta),
-                    titulo=titulo_tag.get_text(strip=True),
+                    titulo=titulo_formatado,  # Passando o título já padronizado
                     data_publicacao=data_publicacao,
                     doi=doi_montado
                 ))
