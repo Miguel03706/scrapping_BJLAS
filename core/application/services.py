@@ -116,7 +116,7 @@ class ScrapingService:
                         # Supondo que o nome do arquivo PDF salvo seja o título do artigo + ".pdf"
                         # Se o seu FileArtigoRepository limpa caracteres especiais do nome, 
                         # o ideal seria aplicar a mesma limpeza aqui para bater exatamente com o arquivo.
-                        "Nome Artigo": f"{artigo.titulo}.pdf",
+                        "Nome Artigo": f"{artigo.titulo}",
                         "DOI": getattr(artigo, 'doi', 'DOI não encontrado')
                     })
                 
