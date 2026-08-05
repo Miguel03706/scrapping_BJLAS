@@ -1,8 +1,11 @@
 import concurrent.futures
+import os
+import pandas as pd
 from tqdm import tqdm
 from core.domain.repositories import EdicaoRepository, ArtigoRepository
 from core.ports.logger_port import Logger
 from core.domain.entities import Edicao, Artigo
+from infrastructure.config import DOWNLOAD_DIR
 import requests
 
 
@@ -100,6 +103,31 @@ class ScrapingService:
         self.logger.info(f"Artigos a serem baixados: {len(artigos)}")
 
         sucessos = self._baixar_artigos_paralelo(artigos)
+
+        # =================================================================
+        # NOVO BLOCO: Geração da planilha Excel com Nome do Arquivo e DOI
+        # =================================================================
+        if artigos:
+            self.logger.info("Gerando planilha Excel com os DOIs...")
+            try:
+                dados_planilha = []
+                for artigo in artigos:
+                    dados_planilha.append({
+                        # Supondo que o nome do arquivo PDF salvo seja o título do artigo + ".pdf"
+                        # Se o seu FileArtigoRepository limpa caracteres especiais do nome, 
+                        # o ideal seria aplicar a mesma limpeza aqui para bater exatamente com o arquivo.
+                        "Nome Artigo": f"{artigo.titulo}.pdf",
+                        "DOI": getattr(artigo, 'doi', 'DOI não encontrado')
+                    })
+                
+                df = pd.DataFrame(dados_planilha)
+                caminho_excel = os.path.join(DOWNLOAD_DIR, "relatorio_dois.xlsx")
+                df.to_excel(caminho_excel, index=False)
+                self.logger.sucesso(f"Planilha de DOIs salva com sucesso em: {caminho_excel}")
+                
+            except Exception as e:
+                self.logger.erro(f"Erro ao gerar a planilha de DOIs: {str(e)}")
+        # =================================================================
 
         return {
             "edicoes": len(edicoes),
